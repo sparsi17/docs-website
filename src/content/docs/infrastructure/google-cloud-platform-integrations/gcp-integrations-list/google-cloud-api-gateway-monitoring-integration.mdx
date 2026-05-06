@@ -40,11 +40,7 @@ This integration reports the following [metric data](/docs/telemetry-data-platfo
 
 | Metric Name | Description |
 |-------------|-------------|
-| `gcp.apigateway.http.request_count` | Number of API Gateway requests. Sampled every 60 seconds. |
-| `gcp.apigateway.http.error_count` | Number of API Gateway errors. Sampled every 60 seconds. |
-| `gcp.apigateway.http.request_latencies` | Distribution of latency (in seconds) of API Gateway requests. Sampled every 60 seconds. |
-| `gcp.apigateway.http.request_sizes` | Distribution of sizes (in bytes) of API Gateway requests. Sampled every 60 seconds. |
-| `gcp.apigateway.http.response_sizes` | Distribution of sizes (in bytes) of API Gateway responses. Sampled every 60 seconds. |
+| `gcp.apigateway.proxy.request_count` | Number of requests served by the API Gateway proxy. Sampled every 60 seconds. |
 
 ### Metric labels [#metric-labels]
 
@@ -54,14 +50,14 @@ This integration reports the following [metric data](/docs/telemetry-data-platfo
 | `location` | The GCP region where the gateway is deployed. |
 | `project_id` | The GCP project ID. |
 | `response_code_class` | The HTTP response code class (e.g., `2xx`, `4xx`, `5xx`). |
-| `backend_service` | The backend service receiving the request. |
+| `api_config` | The name of the API Config resource hosted by the Gateway. |
 
 ## Example NRQL queries [#nrql-queries]
 
 **Request count over time:**
 
 ```sql
-FROM Metric SELECT sum(gcp.apigateway.http.request_count)
+FROM Metric SELECT sum(gcp.apigateway.proxy.request_count)
 WHERE entity.guid = '<your-entity-guid>'
 TIMESERIES AUTO
 ```
@@ -70,16 +66,17 @@ TIMESERIES AUTO
 
 ```sql
 FROM Metric
-SELECT filter(sum(gcp.apigateway.http.request_count), WHERE response_code_class IN ('4xx', '5xx'))
-  * 100 / sum(gcp.apigateway.http.request_count) AS 'Error Rate %'
+SELECT filter(sum(gcp.apigateway.proxy.request_count), WHERE response_code_class IN ('4xx', '5xx'))
+  * 100 / sum(gcp.apigateway.proxy.request_count) AS 'Error Rate %'
 WHERE entity.guid = '<your-entity-guid>'
 TIMESERIES AUTO
 ```
 
-**Average request latency (ms):**
+**Requests by API config:**
 
 ```sql
-FROM Metric SELECT average(gcp.apigateway.http.request_latencies) * 1000 AS 'Latency (ms)'
+FROM Metric SELECT sum(gcp.apigateway.proxy.request_count) AS 'Requests'
 WHERE entity.guid = '<your-entity-guid>'
+FACET api_config
 TIMESERIES AUTO
 ```
