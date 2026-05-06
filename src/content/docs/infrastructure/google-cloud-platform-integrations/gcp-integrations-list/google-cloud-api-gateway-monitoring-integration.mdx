@@ -1,0 +1,85 @@
+---
+title: Google Cloud API Gateway monitoring integration
+tags:
+  - Integrations
+  - Google Cloud Platform integrations
+  - GCP integrations list
+metaDescription: 'New Relic''s Google Cloud API Gateway monitoring integration: how to activate it and what data it reports.'
+freshnessValidatedDate: never
+---
+
+[New Relic's integrations](/docs/infrastructure/introduction-infra-monitoring) with the [Google Cloud Platform (GCP)](https://cloud.google.com/) include an integration to report [Google Cloud API Gateway](https://cloud.google.com/api-gateway/docs) data to New Relic. This document explains how to activate the GCP API Gateway integration and describes the data that can be reported.
+
+## Features
+
+Google Cloud API Gateway enables you to create, secure, and monitor APIs for your Google Cloud serverless back ends. API Gateway provides a single point of control for managing APIs, including authentication, monitoring, and logging.
+
+## Activate integration [#activate]
+
+To enable the integration follow standard procedures to [connect your GCP service to New Relic](/docs/connect-google-cloud-platform-services-infrastructure).
+
+## Configuration and polling [#polling]
+
+You can change the polling frequency and filter data using [configuration options](/docs/integrations/new-relic-integrations/getting-started/configure-polling-frequency-data-collection-cloud-integrations).
+
+Default [polling](/docs/integrations/google-cloud-platform-integrations/getting-started/polling-intervals-gcp-integrations) information for the GCP API Gateway integration:
+
+* New Relic polling interval: 5 minutes
+
+## Find and use data [#find-data]
+
+To find your integration data, go to <DNT>**[one.newrelic.com > All capabilities](https://one.newrelic.com/all-capabilities) > Infrastructure > GCP**</DNT> and select the API Gateway integration.
+
+Data is reported using the `Metric` event type. For more on how to use your data, see [Understand and use integration data](/docs/infrastructure/integrations/find-use-infrastructure-integration-data).
+
+## Metric data [#metrics]
+
+This integration reports the following [metric data](/docs/telemetry-data-platform/understand-data/new-relic-data-types/#metrics).
+
+### Available metrics [#available-metrics]
+
+| Metric Name | Description |
+|-------------|-------------|
+| `gcp.apigateway.http.request_count` | Number of API Gateway requests. Sampled every 60 seconds. |
+| `gcp.apigateway.http.error_count` | Number of API Gateway errors. Sampled every 60 seconds. |
+| `gcp.apigateway.http.request_latencies` | Distribution of latency (in seconds) of API Gateway requests. Sampled every 60 seconds. |
+| `gcp.apigateway.http.request_sizes` | Distribution of sizes (in bytes) of API Gateway requests. Sampled every 60 seconds. |
+| `gcp.apigateway.http.response_sizes` | Distribution of sizes (in bytes) of API Gateway responses. Sampled every 60 seconds. |
+
+### Metric labels [#metric-labels]
+
+| Label | Description |
+|-------|-------------|
+| `gateway_id` | The ID of the API Gateway. |
+| `location` | The GCP region where the gateway is deployed. |
+| `project_id` | The GCP project ID. |
+| `response_code_class` | The HTTP response code class (e.g., `2xx`, `4xx`, `5xx`). |
+| `backend_service` | The backend service receiving the request. |
+
+## Example NRQL queries [#nrql-queries]
+
+**Request count over time:**
+
+```sql
+FROM Metric SELECT sum(gcp.apigateway.http.request_count)
+WHERE entity.guid = '<your-entity-guid>'
+TIMESERIES AUTO
+```
+
+**Error rate:**
+
+```sql
+FROM Metric
+SELECT filter(sum(gcp.apigateway.http.request_count), WHERE response_code_class IN ('4xx', '5xx'))
+  * 100 / sum(gcp.apigateway.http.request_count) AS 'Error Rate %'
+WHERE entity.guid = '<your-entity-guid>'
+TIMESERIES AUTO
+```
+
+**Average request latency (ms):**
+
+```sql
+FROM Metric SELECT average(gcp.apigateway.http.request_latencies) * 1000 AS 'Latency (ms)'
+WHERE entity.guid = '<your-entity-guid>'
+TIMESERIES AUTO
+```
